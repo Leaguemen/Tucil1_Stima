@@ -37,6 +37,36 @@ def clean_data(data : str):
             buffer+= data[i]
     return result
 
+def enumerate_sequence(matrix: Matrix, n:int):
+    def backtrack(path, visited, last_i, last_j, last_movement):
+        if len(path) == n: #base case, complete sequence has been formed
+            strings.append(path)
+            return
+        last_char = path[-1] if path else None
+        for i in range(len(matrix.data)): #len baris
+            for j in range(len(matrix.data[0])): #len kolom
+                if matrix.data[i][j] != last_char and not visited[i][j]:
+                    if last_i != -1 and last_movement == "horizontal" and i != last_i:
+                        continue
+                    if last_j != -1 and last_movement == "vertical" and j != last_j:
+                        continue
+                    visited[i][j] = True
+                    next_movement = "horizontal" if last_movement == "vertical" else "vertical"
+                    backtrack(path + [matrix.data[i][j]], visited, i, j, next_movement)
+                    visited[i][j] = False
+
+    strings = [] #array to store all possible string
+    visited = [[False for _ in range(len(matrix.data[0]))] for _ in range(len(matrix.data))] #boolean array to track cell yang belum di visit
+    for i in range(len(matrix.data)):
+        for j in range(len(matrix.data[0])):
+            visited[i][j] = True
+            # Start by going horizontal
+            backtrack([matrix.data[i][j]], visited, i, j, "horizontal")
+            # Start by going vertical
+            backtrack([matrix.data[i][j]], visited, i, j, "vertical")
+            visited[i][j] = False
+    return strings
+
 #kamus global
 jumlah_token_unik = -1
 token_selection = []
@@ -124,10 +154,3 @@ else:
             for j in range(random.randint(1,max_sequence_size)):
                 temp.append(random.choice(token_selection))
             array_of_sequence.append(temp)
-
-print(buffer_size)
-print(matrix_width, matrix_height)
-print(matrix)
-print(num_of_sequence)
-print(array_of_points)
-print(array_of_sequence)
