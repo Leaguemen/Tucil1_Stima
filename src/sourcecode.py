@@ -67,6 +67,25 @@ def enumerate_sequence(matrix: Matrix, n:int):
             visited[i][j] = False
     return strings
 
+def compare_sequence(compared,reference):
+    length_compared = len(compared)
+    length_reference = len(reference)
+    if length_reference > length_compared:
+        return False
+    else:
+        c= 0
+        r = 0
+        while c < length_compared:
+            if compared[c].symbol == reference[r]:
+                r += 1
+                if r == length_reference:
+                    return True  
+            else:
+                r = 0  
+            c += 1
+        return False
+
+
 #kamus global
 jumlah_token_unik = -1
 token_selection = []
@@ -154,3 +173,4 @@ else:
             for j in range(random.randint(1,max_sequence_size)):
                 temp.append(random.choice(token_selection))
             array_of_sequence.append(temp)
+
