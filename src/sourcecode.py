@@ -37,36 +37,6 @@ def clean_data(data : str):
             buffer+= data[i]
     return result
 
-def enumerate_sequence(matrix: Matrix, n:int):
-    def backtrack(path, visited, last_i, last_j, last_movement):
-        if len(path) == n: #base case, complete sequence has been formed
-            strings.append(path)
-            return
-        last_char = path[-1] if path else None
-        for i in range(len(matrix.data)): #len baris
-            for j in range(len(matrix.data[0])): #len kolom
-                if matrix.data[i][j] != last_char and not visited[i][j]:
-                    if last_i != -1 and last_movement == "horizontal" and i != last_i:
-                        continue
-                    if last_j != -1 and last_movement == "vertical" and j != last_j:
-                        continue
-                    visited[i][j] = True
-                    next_movement = "horizontal" if last_movement == "vertical" else "vertical"
-                    backtrack(path + [matrix.data[i][j]], visited, i, j, next_movement)
-                    visited[i][j] = False
-
-    strings = [] #array to store all possible string
-    visited = [[False for _ in range(len(matrix.data[0]))] for _ in range(len(matrix.data))] #boolean array to track cell yang belum di visit
-    for i in range(len(matrix.data)):
-        for j in range(len(matrix.data[0])):
-            visited[i][j] = True
-            # Start by going horizontal
-            backtrack([matrix.data[i][j]], visited, i, j, "horizontal")
-            # Start by going vertical
-            backtrack([matrix.data[i][j]], visited, i, j, "vertical")
-            visited[i][j] = False
-    return strings
-
 def compare_sequence(compared,reference):
     length_compared = len(compared)
     length_reference = len(reference)
@@ -84,7 +54,44 @@ def compare_sequence(compared,reference):
                 r = 0  
             c += 1
         return False
+    
+def enumerate_sequence(matrix: Matrix, n:int):
+    def backtrack(path, visited, last_i, last_j, last_movement):
+        if len(path) == n:
+            sequence.append(path)
+            return
+        last_char = path[-1] if path else None
+        for i in range(len(matrix.data)):
+            for j in range(len(matrix.data[0])):
+                if matrix.data[i][j] != last_char and not visited[i][j]:
+                    if last_i != -1 and last_movement == "vertical" and i != last_i:
+                        continue
+                    if last_j != -1 and last_movement == "horizontal" and j != last_j:
+                        continue
+                    visited[i][j] = True
+                    next_movement = "vertical" if last_movement == "horizontal" else "horizontal"
+                    backtrack(path + [matrix.data[i][j]], visited, i, j, next_movement)
+                    visited[i][j] = False
 
+    sequence = []
+    visited = [[False for _ in range(len(matrix.data[0]))] for _ in range(len(matrix.data))]
+    for j in range(len(matrix.data[0])):
+        visited[0][j] = True
+        backtrack([matrix.data[0][j]], visited, 0, j, "horizontal")
+        visited[0][j] = False
+    return sequence
+
+def find_idx(lis : list, elmt : int):
+    found = False
+    i = 0
+    while not found and i < len(lis):
+        if lis[i] == elmt:
+            found = True
+        i += 1
+    if not found:
+        return -1
+    else:
+        return i
 
 #kamus global
 jumlah_token_unik = -1
@@ -96,6 +103,13 @@ matrix = Matrix(0,0)
 num_of_sequence = -1
 array_of_points = []
 array_of_sequence = []
+sequence_combination = []
+result_point_array = []
+max_points = 0
+idx_of_max = -1
+seq_result = []
+result_pos = []
+time = 0
 
 #main
 option = input("How would you want to input the data ? \n 1. file \n 2. command line \n >> ")
@@ -126,7 +140,7 @@ if option == '1':
                 curr_row +=1
             else:
                 temp = Token(data_contents[i],curr_col,curr_row)
-                matrix.data[curr_col-1][curr_row-1] = temp
+                matrix.data[curr_row-1][curr_col-1] = temp
                 curr_col +=1
         i +=1
     array_of_sequence = []
@@ -150,14 +164,14 @@ if option == '1':
                 isPoint = not isPoint
         i+=1 
 else:
-    jumlah_token_unik = int(input())
-    input_string= input()
+    jumlah_token_unik = int(input("Masukkan jumlan token yang ingin diinput: "))
+    input_string= input("Masukkan token - token unik tersebut dengan tiap token dipisah dengan spasi (e.g. BD 1C 7A ): ")
     token_selection = input_string.split()
     if jumlah_token_unik != len(token_selection):
         print("Jumlah token unik tidak sama dengan jumlah token unik yang diinput")
     else:
-        buffer_size= int(input())
-        matrix_size = input().split()
+        buffer_size= int(input("Masukkan besar buffer : "))
+        matrix_size = input("Masukkan dimensi matrix (e.g. 6 6) : ").split()
         matrix_width= int(matrix_size[0])
         matrix_height = int(matrix_size[1])
         matrix = Matrix(matrix_width,matrix_height)
@@ -165,8 +179,8 @@ else:
             for j in range(matrix_width):
                 temp = Token(random.choice(token_selection),i+1,j+1)
                 matrix.data[i][j] = temp
-        num_of_sequence = int(input())
-        max_sequence_size = int(input())
+        num_of_sequence = int(input("Masukkan berapa jumlah sequence yang akan dibuat : "))
+        max_sequence_size = int(input("Masukkan panjang maksimal sequence tersebut : "))
         for i in range(num_of_sequence):
             array_of_points.append(random.randint(10,100))
             temp = []
@@ -174,3 +188,25 @@ else:
                 temp.append(random.choice(token_selection))
             array_of_sequence.append(temp)
 
+sequence_combination = enumerate_sequence(matrix,buffer_size)
+for i in range(len(sequence_combination)):
+    points = 0
+    for j in range(len(array_of_sequence)):
+        if compare_sequence(sequence_combination[i],array_of_sequence[j]):
+            points += array_of_points[j]
+    result_point_array.append(points)
+
+max_points = max(result_point_array)
+idx_of_max = find_idx(result_point_array,max_points)
+
+if idx_of_max != -1:
+    result_temp = sequence_combination[idx_of_max]
+    for i in range(len(result_temp)):
+        seq_result.append(result_temp[i].symbol)
+        result_pos.append([result_temp[i].x,result_temp[i].y])
+
+print(max_points)
+print('\n')
+print(seq_result)
+print('\n')
+print(result_pos)
