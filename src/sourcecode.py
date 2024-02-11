@@ -1,4 +1,5 @@
 import random
+import time
 
 class Token:
     def __init__(self, symbol:str,x:int,y:int):
@@ -74,11 +75,13 @@ def enumerate_sequence(matrix: Matrix, n:int):
                     visited[i][j] = False
 
     sequence = []
-    visited = [[False for _ in range(len(matrix.data[0]))] for _ in range(len(matrix.data))]
-    for j in range(len(matrix.data[0])):
-        visited[0][j] = True
-        backtrack([matrix.data[0][j]], visited, 0, j, "horizontal")
-        visited[0][j] = False
+    while n >=2:
+        visited = [[False for _ in range(len(matrix.data[0]))] for _ in range(len(matrix.data))]
+        for j in range(len(matrix.data[0])):
+            visited[0][j] = True
+            backtrack([matrix.data[0][j]], visited, 0, j, "horizontal")
+            visited[0][j] = False
+        n -=1
     return sequence
 
 def find_idx(lis : list, elmt : int):
@@ -109,7 +112,7 @@ max_points = 0
 idx_of_max = -1
 seq_result = []
 result_pos = []
-time = 0
+executionTime = 0
 
 #main
 option = input("How would you want to input the data ? \n 1. file \n 2. command line \n >> ")
@@ -118,12 +121,13 @@ while option not in ['1','2']:
     option = input("How would you want to input the data ? \n 1. file \n 2. command line \n >> ")
 
 if option == '1':
-    data = open("input.txt")
+    file_open=input(str("Apa nama file yang ingin dibaca ? "))
+    data = open("input/"+file_open)
     data_contents = clean_data(data.read())
     buffer_size= int(data_contents[0])
     matrix_width = int(data_contents[2])
     matrix_height = int(data_contents[3])
-    matrix = Matrix(matrix_width,matrix_height)
+    matrix = Matrix(matrix_height,matrix_width)
     i = 0
     n_ent = 0
     curr_col = 1
@@ -163,8 +167,9 @@ if option == '1':
             else:
                 isPoint = not isPoint
         i+=1 
+    data.close()
 else:
-    jumlah_token_unik = int(input("Masukkan jumlan token yang ingin diinput: "))
+    jumlah_token_unik = int(input("Masukkan jumlah token yang ingin diinput: "))
     input_string= input("Masukkan token - token unik tersebut dengan tiap token dipisah dengan spasi (e.g. BD 1C 7A ): ")
     token_selection = input_string.split()
     if jumlah_token_unik != len(token_selection):
@@ -174,39 +179,78 @@ else:
         matrix_size = input("Masukkan dimensi matrix (e.g. 6 6) : ").split()
         matrix_width= int(matrix_size[0])
         matrix_height = int(matrix_size[1])
-        matrix = Matrix(matrix_width,matrix_height)
-        for i in range(matrix_width):
+        matrix = Matrix(matrix_height,matrix_width)
+        for i in range(matrix_height):
             for j in range(matrix_width):
-                temp = Token(random.choice(token_selection),i+1,j+1)
+                temp = Token(random.choice(token_selection),j+1,i+1)
                 matrix.data[i][j] = temp
+        print("Membuat matrix secara acak ... ")
+        time.sleep(2)
+        print("Inilah matrix yang digunakan: ")
+        print(matrix)
         num_of_sequence = int(input("Masukkan berapa jumlah sequence yang akan dibuat : "))
         max_sequence_size = int(input("Masukkan panjang maksimal sequence tersebut : "))
         for i in range(num_of_sequence):
             array_of_points.append(random.randint(10,100))
             temp = []
-            for j in range(random.randint(1,max_sequence_size)):
+            for j in range(random.randint(2,max_sequence_size)):
                 temp.append(random.choice(token_selection))
             array_of_sequence.append(temp)
-
+        print("Membuat sequence secara acak ... ")
+        time.sleep(2)
+        for i in range(len(array_of_sequence)):
+            print(array_of_sequence[i], "@", array_of_points[i], "Points")
+start = time.time()
 sequence_combination = enumerate_sequence(matrix,buffer_size)
-for i in range(len(sequence_combination)):
-    points = 0
-    for j in range(len(array_of_sequence)):
-        if compare_sequence(sequence_combination[i],array_of_sequence[j]):
-            points += array_of_points[j]
-    result_point_array.append(points)
+if sequence_combination == []:
+    print("Tidak ada sekuens yang bisa digenerate ... ")
+    out= input(("Ketik apapun untuk keluar dari program ... "))
+else:
+    for i in range(len(sequence_combination)):
+        points = 0
+        for j in range(len(array_of_sequence)):
+            if compare_sequence(sequence_combination[i],array_of_sequence[j]):
+                points += array_of_points[j]
+        result_point_array.append(points)
 
-max_points = max(result_point_array)
-idx_of_max = find_idx(result_point_array,max_points)
+    max_points = max(result_point_array)
+    idx_of_max = find_idx(result_point_array,max_points)
 
-if idx_of_max != -1:
-    result_temp = sequence_combination[idx_of_max]
-    for i in range(len(result_temp)):
-        seq_result.append(result_temp[i].symbol)
-        result_pos.append([result_temp[i].x,result_temp[i].y])
+    if idx_of_max != -1:
+        result_temp = sequence_combination[idx_of_max]
+        for i in range(len(result_temp)):
+            seq_result.append(result_temp[i].symbol)
+            result_pos.append([result_temp[i].x,result_temp[i].y])
+    end = time.time()
+    executionTime = (end - start)*1000
 
-print(max_points)
-print('\n')
-print(seq_result)
-print('\n')
-print(result_pos)
+
+    print("Poin maksimal yang bisa didapat adalah :", max_points)
+    print('\n')
+    print("Dengan sequence sebagai berikut :",seq_result)
+    print('\n')
+    print("Berikut adalah koordinat tiap simbol pada sequence tersebut : ")
+    for i in range(len(result_pos)):
+        print(result_pos[i])
+
+    print("execution time :",executionTime,"ms")
+
+    option_save = str(input("Apakah Anda ingin menyimpan hasil program ? (y/n) "))
+    while option_save not in ["y","n"]:
+        print("Bukan pilihan valid, tolong ketik hanya y untuk yes atau n untuk no !")
+        option_save=str(input("Apakah Anda ingin menyimpan hasil program ? (y/n) "))
+    if option_save == "y":
+        file_name = str(input("Apa nama filenya ? "))
+        save = open("../test/"+file_name,'w')
+        save.write(str(max_points))
+        save.write('\n')
+        save.write(str(seq_result))
+        save.write('\n')
+        for i in range(len(result_pos)):
+            save.write(str(result_pos[i]))
+            save.write('\n')
+        save.write(str(executionTime))
+        save.close()
+    out= input(("Ketik apapun untuk keluar dari program ... "))
+
+
